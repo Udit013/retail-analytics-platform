@@ -1,0 +1,44 @@
+{
+  "name": "retail-analytics-platform",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint",
+    "db:push": "drizzle-kit push",
+    "db:generate": "drizzle-kit generate",
+    "db:studio": "drizzle-kit studio",
+    "seed": "tsx scripts/seed.ts"
+  },
+  "dependencies": {
+    "@google/generative-ai": "^0.24.0",
+    "better-auth": "^1.2.8",
+    "chart.js": "^4.5.1",
+    "date-fns": "^4.1.0",
+    "drizzle-orm": "^0.44.7",
+    "next": "16.0.1",
+    "papaparse": "^5.5.3",
+    "postgres": "^3.4.7",
+    "react": "19.2.0",
+    "react-chartjs-2": "^5.3.1",
+    "react-dom": "19.2.0",
+    "recharts": "^2.15.3"
+  },
+  "devDependencies": {
+    "@faker-js/faker": "^9.8.0",
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "^20",
+    "@types/papaparse": "^5.3.15",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "dotenv": "^17.4.2",
+    "drizzle-kit": "^0.31.6",
+    "eslint": "^9",
+    "eslint-config-next": "16.0.1",
+    "tailwindcss": "^4",
+    "tsx": "^4.19.4",
+    "typescript": "^5"
+  }
+}
