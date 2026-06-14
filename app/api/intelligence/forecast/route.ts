@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getRevenueSeries, metricValues, type Grain, type SeriesPoint } from '@/lib/intelligence/data';
 import { forecast } from '@/lib/intelligence/forecast';
+import { tryMlForecast } from '@/lib/intelligence/ml-service';
 
 const METRICS = ['revenue', 'profit', 'orders', 'customers', 'quantity'] as const;
 type Metric = (typeof METRICS)[number];
@@ -25,6 +26,19 @@ export async function GET(req: NextRequest) {
     const values = metricValues(series, metric as keyof Omit<SeriesPoint, 'date'>);
     const dates = series.map((p) => p.date);
     const result = forecast(values, dates, grain, periods, confidence);
+
+    // If the optional local Python ML service (Prophet) is available, use its future
+    // points instead — keeping the same TS history/metrics for a consistent response.
+    const ml = await tryMlForecast(values, dates, grain, periods, confidence);
+    if (ml) {
+      const history = result.series.filter((p) => p.actual !== null);
+      const mlFuture = ml.points.map((p) => ({
+        date: p.date, actual: null,
+        forecast: Math.round(p.forecast), lower: Math.round(p.lower), upper: Math.round(p.upper),
+      }));
+      result.series = [...history, ...mlFuture];
+      result.model = ml.model;
+    }
 
     // Summary stats for the headline cards.
     const lastActual = values[values.length - 1];

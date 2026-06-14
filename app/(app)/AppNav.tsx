@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation';
 const navLinks = [
   { href: '/dashboard', label: 'Dashboard' },
   { href: '/decision-center', label: 'Decision Center' },
+  { href: '/ai-analyst', label: 'AI Analyst' },
   { href: '/forecasting', label: 'Forecasting' },
   { href: '/customer-intelligence', label: 'Customer Intel' },
   { href: '/inventory-optimization', label: 'Inventory' },
