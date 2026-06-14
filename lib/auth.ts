@@ -34,7 +34,9 @@ export const auth = betterAuth({
   },
   trustedOrigins: [
     'http://localhost:3000',
-    process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000',
+    'https://retailnexa.vercel.app',
+    'https://sales-dashboard-git-main-udit-agarwals-projects-91413f51.vercel.app',
+    ...(process.env.BETTER_AUTH_URL ? [process.env.BETTER_AUTH_URL] : []),
   ],
 });
 
