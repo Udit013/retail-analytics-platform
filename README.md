@@ -14,7 +14,7 @@ Full-stack retail analytics dashboard with AI-powered insights, cohort analysis,
 │                     FRONTEND  (Next.js)                          │
 │  Dashboard · Revenue Chart · Cohort Heatmap · AI Insights       │
 │  Product Chart · AOV Chart · Inventory Table · Anomaly Alerts   │
-│  CRUD Tables (Admin) · ETL Upload (Admin) · Sign-In Page        │
+│  CRUD Tables · ETL Upload · Landing Page                        │
 ├─────────────────────────────────────────────────────────────────┤
 │                     API  (Route Handlers)                        │
 │  /api/analytics/revenue      /api/analytics/products            │
@@ -22,12 +22,11 @@ Full-stack retail analytics dashboard with AI-powered insights, cohort analysis,
 │  /api/analytics/aov          /api/analytics/anomalies           │
 │  /api/insights (Gemini)      /api/kpi/stream (SSE 30s)          │
 │  /api/etl/upload (CSV)       /api/export (CSV|JSON)             │
-│  /api/auth/[...all]          /api/customers|products|orders     │
+│  /api/export                 /api/customers|products|orders     │
 ├─────────────────────────────────────────────────────────────────┤
 │                     DATA  (Neon PostgreSQL)                      │
 │  customers · products · orders · sales/order_items             │
 │  inventory · returns · etl_logs                                 │
-│  user · session · account · verification  (better-auth)         │
 └─────────────────────────────────────────────────────────────────┘
                                │
               ┌────────────────┴─────────────────┐
@@ -50,7 +49,6 @@ Full-stack retail analytics dashboard with AI-powered insights, cohort analysis,
 | Anomaly Detection | Z-score > 2.5σ on daily revenue with explanations |
 | ETL Pipeline | CSV drag-drop · dedup · FK validation · run audit log |
 | CSV/JSON Export | Any dataset downloadable from the dashboard |
-| RBAC | Email + password auth · Admin: all pages · Viewer: dashboard only |
 
 ---
 
@@ -61,7 +59,6 @@ Full-stack retail analytics dashboard with AI-powered insights, cohort analysis,
 | Framework | Next.js (App Router) |
 | Database | Neon PostgreSQL |
 | ORM | Drizzle ORM |
-| Auth | better-auth (email + password, RBAC) |
 | Charts | Recharts |
 | AI | Gemini |
 | ETL | PapaParse (CSV) |
@@ -81,8 +78,6 @@ sales         sales_id (PK)    · order_id (FK) · product_id (FK) · sales · q
 inventory     inventory_id (PK)· product_id (FK) · quantity · reorder_point · last_restocked
 returns       return_id (PK)   · sales_id (FK) · return_date · reason · refund_amount
 etl_logs      log_id (PK)      · filename · total_rows · inserted_rows · error_rows
-user          id (PK)          · name · email · role (viewer|admin)
-session       id (PK)          · user_id (FK) · token · expires_at
 ```
 
 ---
@@ -100,8 +95,6 @@ npm install --legacy-peer-deps
 Create `.env` in the project root:
 ```env
 DATABASE_URL=postgresql://...neon.tech/neondb?sslmode=require
-BETTER_AUTH_SECRET=<random 32-byte base64>
-BETTER_AUTH_URL=http://localhost:3000
 GEMINI_API_KEY=<from Google AI Studio — free>
 NEXT_PUBLIC_APP_URL=http://localhost:3000
 ```
@@ -122,16 +115,7 @@ npm run seed       # optional: generates example rows for development
 npm run dev        # http://localhost:3000
 ```
 
-### 5. Accounts and roles
-Create an account at `/sign-up`. New accounts get the `viewer` role.
-Promote a user to admin (sets a password + admin role):
-```bash
-npm run set-admin <email> <password>
-```
-Or directly in the Neon SQL editor:
-```sql
-UPDATE "user" SET role = 'admin' WHERE email = 'your@email.com';
-```
+The app is fully open — no login. Every page (dashboard, ETL upload, CRUD tables) is publicly accessible.
 
 ---
 
@@ -142,7 +126,7 @@ npx vercel --prod
 ```
 
 Set env vars in the Vercel dashboard (same keys as `.env`).
-Set `BETTER_AUTH_URL` and `NEXT_PUBLIC_APP_URL` to your Vercel URL.
+Set `NEXT_PUBLIC_APP_URL` to your Vercel URL.
 
 ---
 

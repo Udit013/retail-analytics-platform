@@ -1,22 +1,18 @@
 'use client';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useSession, signOut } from '@/lib/auth-client';
+
+const navLinks = [
+  { href: '/dashboard', label: 'Dashboard' },
+  { href: '/etl', label: 'ETL Upload' },
+  { href: '/tables/customers', label: 'Customers' },
+  { href: '/tables/products', label: 'Products' },
+  { href: '/tables/orders', label: 'Orders' },
+  { href: '/tables/sales', label: 'Sales' },
+];
 
 export default function AppNav() {
-  const { data: session } = useSession();
   const path = usePathname();
-  const role = (session?.user as Record<string, unknown>)?.role as string;
-  const isAdmin = role === 'admin';
-
-  const navLinks = [
-    { href: '/dashboard', label: 'Dashboard', always: true },
-    { href: '/etl', label: 'ETL Upload', always: false },
-    { href: '/tables/customers', label: 'Customers', always: false },
-    { href: '/tables/products', label: 'Products', always: false },
-    { href: '/tables/orders', label: 'Orders', always: false },
-    { href: '/tables/sales', label: 'Sales', always: false },
-  ];
 
   return (
     <header className="sticky top-0 z-50 w-full bg-white border-b border-gray-200 shadow-sm">
@@ -26,8 +22,7 @@ export default function AppNav() {
         </Link>
         <nav className="flex-1 overflow-x-auto">
           <ul className="flex gap-1 text-sm">
-            {navLinks.map(({ href, label, always }) => {
-              if (!always && !isAdmin) return null;
+            {navLinks.map(({ href, label }) => {
               const active = path === href || path.startsWith(href + '/');
               return (
                 <li key={href}>
@@ -42,19 +37,6 @@ export default function AppNav() {
             })}
           </ul>
         </nav>
-        <div className="flex items-center gap-2 shrink-0">
-          {session && (
-            <>
-              <span className="text-xs text-gray-500 hidden sm:block">
-                {session.user.name} · <span className="capitalize font-medium">{role}</span>
-              </span>
-              <button onClick={() => signOut()}
-                className="text-xs px-3 py-1.5 rounded-md border border-gray-300 text-gray-600 hover:bg-gray-50">
-                Sign out
-              </button>
-            </>
-          )}
-        </div>
       </div>
     </header>
   );

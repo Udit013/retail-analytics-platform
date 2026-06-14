@@ -10,12 +10,10 @@
     "db:push": "drizzle-kit push",
     "db:generate": "drizzle-kit generate",
     "db:studio": "drizzle-kit studio",
-    "seed": "tsx scripts/seed.ts",
-    "set-admin": "tsx scripts/set-admin.ts"
+    "seed": "tsx scripts/seed.ts"
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.0",
-    "better-auth": "^1.2.8",
     "chart.js": "^4.5.1",
     "date-fns": "^4.1.0",
     "drizzle-orm": "^0.44.7",

@@ -14,7 +14,6 @@ const STACK = [
   ['Neon PostgreSQL', 'Serverless Postgres'],
   ['Drizzle ORM', 'Type-safe SQL queries'],
   ['Recharts', 'Composable React charts'],
-  ['better-auth', 'Email + password & RBAC'],
   ['Gemini', 'AI-generated insights'],
   ['Vercel', 'Zero-config deployment'],
   ['Tailwind CSS', 'Utility-first styling'],
@@ -30,8 +29,8 @@ export default function LandingPage() {
           <nav className="flex items-center gap-6 text-sm font-medium text-gray-600">
             <a href="#features" className="hover:text-gray-900">Features</a>
             <a href="#stack" className="hover:text-gray-900">Stack</a>
-            <Link href="/sign-in" className="px-4 py-1.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
-              Sign In
+            <Link href="/dashboard" className="px-4 py-1.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
+              Open Dashboard
             </Link>
           </nav>
         </div>
@@ -46,7 +45,7 @@ export default function LandingPage() {
           A full-stack analytics platform — AI insights, cohort analysis, anomaly detection, and real-time KPI refresh on your own sales data.
         </p>
         <div className="mt-8 flex flex-wrap justify-center gap-3">
-          <Link href="/sign-in"
+          <Link href="/dashboard"
             className="px-6 py-3 bg-white text-indigo-700 font-semibold rounded-xl hover:bg-indigo-50 transition-colors shadow-sm">
             Open Dashboard
           </Link>
@@ -61,7 +60,7 @@ export default function LandingPage() {
             ['ETL', 'CSV ingest'],
             ['8', 'DB tables'],
             ['10+', 'Analytics views'],
-            ['RBAC', 'Auth system'],
+            ['SSE', 'Live KPIs'],
             ['AI', 'Gemini insights'],
           ].map(([val, label]) => (
             <div key={label} className="text-center">
@@ -106,7 +105,7 @@ export default function LandingPage() {
       <section className="w-full bg-indigo-600 py-16 text-center text-white px-6">
         <h2 className="text-2xl font-bold">Turn your sales data into decisions</h2>
         <p className="text-indigo-200 mt-2 mb-6">Upload a CSV or add records directly — every chart updates from your live database.</p>
-        <Link href="/sign-in"
+        <Link href="/dashboard"
           className="inline-block px-8 py-3 bg-white text-indigo-700 font-semibold rounded-xl hover:bg-indigo-50 transition-colors shadow-sm">
           Open Dashboard
         </Link>
