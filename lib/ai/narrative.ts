@@ -38,7 +38,7 @@ export function buildWeeklyNarrative(c: WeeklyContext): string {
 
   const sentences: string[] = [];
   sentences.push(
-    `Revenue came in at ${money(c.revenueCurrent)} this week, ${trend} (${change >= 0 ? '+' : ''}${change.toFixed(1)}%) versus the prior week.`
+    `Revenue came in at ${money(c.revenueCurrent)} over the latest 30 days, ${trend} (${change >= 0 ? '+' : ''}${change.toFixed(1)}%) versus the prior 30 days.`
   );
   sentences.push(
     `${c.topCategory} led performance and ${c.topProduct} was the single strongest product.`
@@ -73,10 +73,10 @@ export function buildWeeklyNarrative(c: WeeklyContext): string {
 
 /** Prompt used to ask a local model to polish the deterministic draft (optional enrichment). */
 export function enrichmentPrompt(draft: string, c: WeeklyContext): string {
-  return `You are a concise retail analytics assistant. Rewrite the following weekly business summary so it reads naturally and professionally in 3-4 sentences. Keep every number exactly as given, no bullet points, end with one clear recommendation.
+  return `You are a concise retail analytics assistant. Rewrite the following business summary so it reads naturally and professionally in 3-4 sentences. Keep every number exactly as given, no bullet points, end with one clear recommendation.
 
 DATA:
-- Revenue this week: $${c.revenueCurrent.toFixed(0)} (prior week: $${c.revenuePrev.toFixed(0)})
+- Revenue latest 30 days: $${c.revenueCurrent.toFixed(0)} (prior 30 days: $${c.revenuePrev.toFixed(0)})
 - Top category: ${c.topCategory}
 - Top product: ${c.topProduct}
 - Return rate: ${(c.returnRate * 100).toFixed(1)}%

@@ -15,20 +15,28 @@ export async function GET() {
       return NextResponse.json({ insight: cached.text, source: cached.source, cached: true });
     }
 
-    const now = new Date();
-    const weekAgo = new Date(now.getTime() - 7 * 864e5);
-    const twoWeeksAgo = new Date(now.getTime() - 14 * 864e5);
+    // Anchor on the latest date present in the data (not wall-clock now), so the
+    // summary stays meaningful for historical datasets. Compare the most recent
+    // 30 days of data against the prior 30 days.
+    const [maxRow] = (await db.execute(sql`
+      SELECT to_char(MAX(order_date::date), 'YYYY-MM-DD') AS max_date FROM ${orders}
+    `)) as unknown as Array<Record<string, unknown>>;
+    const anchor = maxRow?.max_date ? new Date(String(maxRow.max_date)) : new Date();
+    const win = (daysBack: number) => new Date(anchor.getTime() - daysBack * 864e5);
     const d = (x: Date) => x.toISOString().slice(0, 10);
+    const p0 = d(win(60));
+    const p1 = d(win(30));
+    const p2 = d(anchor);
 
     const [revenueNow] = (await db.execute(sql`
       SELECT COALESCE(SUM(s.sales::numeric), 0) AS rev
       FROM ${sales} s JOIN ${orders} o ON s.order_id = o.order_id
-      WHERE o.order_date::date BETWEEN ${d(weekAgo)}::date AND ${d(now)}::date
+      WHERE o.order_date::date BETWEEN ${p1}::date AND ${p2}::date
     `)) as unknown as Array<Record<string, unknown>>;
     const [revenuePrev] = (await db.execute(sql`
       SELECT COALESCE(SUM(s.sales::numeric), 0) AS rev
       FROM ${sales} s JOIN ${orders} o ON s.order_id = o.order_id
-      WHERE o.order_date::date BETWEEN ${d(twoWeeksAgo)}::date AND ${d(weekAgo)}::date
+      WHERE o.order_date::date BETWEEN ${p0}::date AND ${p1}::date
     `)) as unknown as Array<Record<string, unknown>>;
     const [topCategory] = (await db.execute(sql`
       SELECT p.category FROM ${sales} s JOIN ${products} p ON s.product_id = p.product_id
