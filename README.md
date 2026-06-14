@@ -2,7 +2,7 @@
 
 Full-stack retail analytics dashboard with 50k+ rows of synthetic data, AI-powered insights, cohort analysis, anomaly detection, and real-time KPI refresh.
 
-**Live Demo:** [See Vercel URL after deploy]
+**Live Demo:** [https://sales-dashboard-oj09qfxim-udit-agarwals-projects-91413f51.vercel.app]
 **GitHub:** https://github.com/Udit013/retail-analytics-platform
 
 ---
