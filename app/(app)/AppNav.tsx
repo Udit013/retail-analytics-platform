@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation';
 const navLinks = [
   { href: '/dashboard', label: 'Dashboard' },
   { href: '/forecasting', label: 'Forecasting' },
+  { href: '/customer-intelligence', label: 'Customer Intel' },
   { href: '/etl', label: 'ETL Upload' },
   { href: '/tables/customers', label: 'Customers' },
   { href: '/tables/products', label: 'Products' },
