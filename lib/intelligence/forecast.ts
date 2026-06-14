@@ -92,6 +92,69 @@ function r2(actual: number[], pred: number[]): number {
   return ssTot === 0 ? 0 : clamp(1 - ssRes / ssTot, -1, 1);
 }
 
+interface Candidate {
+  model: string;
+  seasonality: number;
+  trendPerStep: number;
+  fitted: number[]; // one-step-ahead in-sample predictions
+  project: (h: number) => number; // forecast h steps beyond the end of `vals`
+}
+
+/** Build all applicable forecasting models for a series (used for both fitting and backtest). */
+function buildCandidates(vals: number[], m: number): Candidate[] {
+  const k = vals.length;
+  const out: Candidate[] = [];
+
+  // Holt-Winters (seasonal) — needs >= 2 full seasons + 1.
+  if (k >= 2 * m + 1) {
+    let bestParams = { a: 0.3, b: 0.05, g: 0.2 };
+    let bestErr = Infinity;
+    for (const a of [0.1, 0.3, 0.5, 0.8]) {
+      for (const b of [0.01, 0.05, 0.2]) {
+        for (const g of [0.05, 0.2, 0.5]) {
+          const err = rmse(vals.slice(1), holtWinters(vals, m, a, b, g).fitted.slice(1));
+          if (err < bestErr) { bestErr = err; bestParams = { a, b, g }; }
+        }
+      }
+    }
+    const hw = holtWinters(vals, m, bestParams.a, bestParams.b, bestParams.g);
+    out.push({
+      model: 'Holt-Winters (seasonal)',
+      seasonality: m,
+      trendPerStep: hw.trend,
+      fitted: hw.fitted,
+      project: (h) => hw.level + h * hw.trend + hw.season[(k + h - 1) % m],
+    });
+  }
+
+  // Linear trend (OLS on index).
+  if (k >= 4) {
+    const fit = linearRegression(vals);
+    out.push({
+      model: 'Linear trend',
+      seasonality: 0,
+      trendPerStep: fit.slope,
+      fitted: vals.map((_, i) => fit.predict(i)),
+      project: (h) => fit.predict(k - 1 + h),
+    });
+  }
+
+  // Drift / random-walk-with-drift — always available.
+  {
+    const last = vals[k - 1] ?? 0;
+    const drift = k >= 2 ? (vals[k - 1] - vals[0]) / (k - 1) : 0;
+    out.push({
+      model: 'Drift',
+      seasonality: 0,
+      trendPerStep: drift,
+      fitted: vals.map((_, i) => (i === 0 ? vals[0] : vals[i - 1] + drift)),
+      project: (h) => last + h * drift,
+    });
+  }
+
+  return out;
+}
+
 /**
  * Forecast a numeric series `horizon` steps ahead.
  * @param values historical values aligned to `dates`
@@ -113,67 +176,31 @@ export function forecast(
   const history: ForecastPoint[] = [];
   const future: ForecastPoint[] = [];
 
-  // --- Build candidate models, then pick the one with the lowest in-sample error ---
-  interface Candidate {
-    model: string;
-    seasonality: number;
-    trendPerStep: number;
-    fitted: number[];
-    project: (h: number) => number;
-  }
-  const candidates: Candidate[] = [];
+  // --- Build candidate models, then select via a multi-step holdout backtest ---
+  const candidates = buildCandidates(values, m);
 
-  // Holt-Winters (seasonal) — only with enough seasonal history.
-  if (n >= 2 * m + 1) {
-    let bestParams = { a: 0.3, b: 0.05, g: 0.2 };
-    let bestErr = Infinity;
-    for (const a of [0.1, 0.3, 0.5, 0.8]) {
-      for (const b of [0.01, 0.05, 0.2]) {
-        for (const g of [0.05, 0.2, 0.5]) {
-          const err = rmse(values.slice(1), holtWinters(values, m, a, b, g).fitted.slice(1));
-          if (err < bestErr) { bestErr = err; bestParams = { a, b, g }; }
-        }
-      }
-    }
-    const hw = holtWinters(values, m, bestParams.a, bestParams.b, bestParams.g);
-    candidates.push({
-      model: 'Holt-Winters (seasonal)',
-      seasonality: m,
-      trendPerStep: hw.trend,
-      fitted: hw.fitted,
-      project: (h) => hw.level + h * hw.trend + hw.season[(n + h - 1) % m],
-    });
-  }
-
-  // Linear trend (OLS).
-  if (n >= 4) {
-    const fit = linearRegression(values);
-    candidates.push({
-      model: 'Linear trend',
-      seasonality: 0,
-      trendPerStep: fit.slope,
-      fitted: values.map((_, i) => fit.predict(i)),
-      project: (h) => fit.predict(n - 1 + h),
-    });
-  }
-
-  // Drift / last-value — always available.
-  {
-    const last = values[n - 1] ?? 0;
-    const drift = n >= 2 ? (values[n - 1] - values[0]) / (n - 1) : 0;
-    candidates.push({
-      model: 'Drift',
-      seasonality: 0,
-      trendPerStep: drift,
-      fitted: values.slice(),
-      project: (h) => last + h * drift,
-    });
-  }
-
-  // Pick the candidate with the lowest one-step in-sample RMSE.
-  const chosen = candidates.reduce((best, c) =>
+  // Backtest: hold out the last vK periods, fit on the rest, forecast vK ahead,
+  // and score each model TYPE on multi-step error. This rewards models that capture
+  // real structure (e.g. seasonality) rather than naive one-step persistence.
+  const vK = Math.min(horizon, Math.max(2, Math.floor(n * 0.2)));
+  let chosen = candidates.reduce((best, c) =>
     rmse(values.slice(1), c.fitted.slice(1)) < rmse(values.slice(1), best.fitted.slice(1)) ? c : best
   );
+  if (n - vK >= 4) {
+    const train = values.slice(0, n - vK);
+    const holdout = values.slice(n - vK);
+    const trainCands = buildCandidates(train, m);
+    let bestName = '';
+    let bestErr = Infinity;
+    for (const c of trainCands) {
+      const preds = holdout.map((_, i) => c.project(i + 1));
+      const err = rmse(holdout, preds);
+      if (err < bestErr) { bestErr = err; bestName = c.model; }
+    }
+    const winner = candidates.find((c) => c.model === bestName);
+    if (winner) chosen = winner;
+  }
+
   const model = chosen.model;
   const seasonality = chosen.seasonality;
   const trendPerStep = chosen.trendPerStep;
