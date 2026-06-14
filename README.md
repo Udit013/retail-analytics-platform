@@ -1,6 +1,8 @@
-# Retail Analytics Platform
+# RetailNexa AI — Decision Intelligence Platform
 
-Full-stack retail analytics dashboard with AI-powered insights, cohort analysis, anomaly detection, and real-time KPI refresh — all running on your own sales data.
+Goes beyond dashboards: **data → insight → recommendation → simulation → decision**.
+Forecasting, root-cause analysis, customer & inventory intelligence, scenario simulation,
+and a local-AI business analyst — all on your own retail data, 100% free and open-source.
 
 **Live:** https://retailnexa.vercel.app
 **GitHub:** https://github.com/Udit013/retail-analytics-platform
@@ -11,44 +13,45 @@ Full-stack retail analytics dashboard with AI-powered insights, cohort analysis,
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                     FRONTEND  (Next.js)                          │
-│  Dashboard · Revenue Chart · Cohort Heatmap · AI Insights       │
-│  Product Chart · AOV Chart · Inventory Table · Anomaly Alerts   │
-│  CRUD Tables · ETL Upload · Landing Page                        │
+│                     FRONTEND  (Next.js · Recharts)               │
+│  Decision Center · AI Analyst · Forecasting · Customer Intel    │
+│  Inventory Optimization · Pricing/Promo Sim · Root Cause         │
+│  Executive Reports (PDF) · Dashboard · ETL · CRUD Tables         │
+├─────────────────────────────────────────────────────────────────┤
+│                 INTELLIGENCE ENGINES (lib/intelligence)          │
+│  stats · forecast (Holt-Winters) · customer (RFM/CLV/churn)     │
+│  inventory (safety stock/EOQ) · pricing (elasticity)            │
+│  rootcause (KPI decomposition) · decisions (synthesis)          │
 ├─────────────────────────────────────────────────────────────────┤
 │                     API  (Route Handlers)                        │
-│  /api/analytics/revenue      /api/analytics/products            │
-│  /api/analytics/cohorts      /api/analytics/inventory           │
-│  /api/analytics/aov          /api/analytics/anomalies           │
-│  /api/insights (Gemini)      /api/kpi/stream (SSE 30s)          │
-│  /api/etl/upload (CSV)       /api/export (CSV|JSON)             │
-│  /api/export                 /api/customers|products|orders     │
+│  /api/intelligence/{forecast,customers,inventory,pricing,        │
+│      root-cause,decisions,report}                               │
+│  /api/ai/analyst (Ollama)    /api/insights (Ollama+rule-based)  │
+│  /api/analytics/*  /api/etl/upload  /api/export  /api/kpi/stream │
 ├─────────────────────────────────────────────────────────────────┤
-│                     DATA  (Neon PostgreSQL)                      │
-│  customers · products · orders · sales/order_items             │
-│  inventory · returns · etl_logs                                 │
+│   DATA (Neon PostgreSQL)        AI (local Ollama)               │
+│   customers·products·orders     Llama/Qwen/Mistral — no SaaS    │
+│   sales·inventory·returns       Optional: Python ML (Prophet)   │
 └─────────────────────────────────────────────────────────────────┘
-                               │
-              ┌────────────────┴─────────────────┐
-          Gemini (AI insights)             Vercel (deploy)
 ```
 
 ---
 
-## Feature Table
+## Decision Intelligence Features
 
 | Feature | Description |
 |---------|-------------|
-| Live KPI Cards | Revenue, orders, AOV, return rate, active customers — SSE refresh every 30s |
-| Revenue Trend | Line chart · day/week/month/quarter · date range picker · export CSV |
-| Product Performance | Top products by revenue/units/return rate · category filter |
-| Cohort Heatmap | Month-N retention grid (custom SVG renderer, no library) |
-| AOV Charts | Monthly AOV trend + basket size distribution |
-| Inventory Health | Turnover velocity, days-of-stock, low-stock alerts |
-| AI Insights | Gemini-generated weekly summary, cached 24h |
-| Anomaly Detection | Z-score > 2.5σ on daily revenue with explanations |
-| ETL Pipeline | CSV drag-drop · dedup · FK validation · run audit log |
-| CSV/JSON Export | Any dataset downloadable from the dashboard |
+| **Decision Center** | Flagship: ranked decisions synthesized from every engine, each with expected outcome + confidence |
+| **AI Business Analyst** | Ask in plain English; answered by a local open-source model (Ollama) grounded in your analytics, with a deterministic fallback |
+| **Forecasting** | Revenue/orders/demand/customers, 30/90/365d, Holt-Winters with seasonality, confidence intervals, model auto-selected via holdout backtest |
+| **Customer Intelligence** | RFM segmentation, predicted 12-mo CLV, churn risk, VIP/win-back/upsell actions |
+| **Inventory Optimization** | Stock-out & overstock risk, safety stock, reorder points, recommended order quantities, carrying cost |
+| **Pricing & Promo Simulation** | Price-elasticity scenario modeling; promo impact (10%/20%/BOGO/free-ship) on revenue, profit, margin |
+| **Root Cause Analysis** | Decomposes KPI change across category/region/segment + churn/returns/pricing, with confidence & recommendations |
+| **Executive Reports** | Weekly/monthly/quarterly KPIs + decisions, downloadable as PDF |
+
+Plus the analytics base: live KPI cards (SSE), revenue/AOV/product charts, cohort heatmap,
+anomaly detection, ETL CSV ingest, CSV/JSON export, and CRUD tables.
 
 ---
 
@@ -56,15 +59,19 @@ Full-stack retail analytics dashboard with AI-powered insights, cohort analysis,
 
 | Layer | Tech |
 |-------|------|
-| Framework | Next.js (App Router) |
-| Database | Neon PostgreSQL |
-| ORM | Drizzle ORM |
+| Framework | Next.js (App Router) · TypeScript |
+| Database | Neon PostgreSQL · Drizzle ORM |
 | Charts | Recharts |
-| AI | Gemini |
+| AI | **Ollama** (local Llama/Qwen/Mistral) — no OpenAI/Gemini/paid SaaS |
+| Forecasting | TypeScript stats engine · optional local Python service (Prophet/LightGBM) |
+| Reports | jsPDF |
 | ETL | PapaParse (CSV) |
 | Styling | Tailwind CSS |
-| Deploy | Vercel |
-| Language | TypeScript |
+| Deploy | Vercel (free tier) |
+
+> **100% free & open-source.** AI runs on a local Ollama model — works fully when running
+> locally, and the deployed app degrades gracefully to a deterministic analyst. See
+> [`ml-service/`](ml-service) for the optional Python forecasting microservice.
 
 ---
 
@@ -95,9 +102,18 @@ npm install --legacy-peer-deps
 Create `.env` in the project root:
 ```env
 DATABASE_URL=postgresql://...neon.tech/neondb?sslmode=require
-GEMINI_API_KEY=<from Google AI Studio — free>
 NEXT_PUBLIC_APP_URL=http://localhost:3000
+
+# Optional — local AI (free). Install Ollama + a model: `ollama pull llama3.2`
+OLLAMA_URL=http://localhost:11434
+OLLAMA_MODEL=llama3.2
+
+# Optional — local Python forecasting service (see ml-service/)
+# ML_SERVICE_URL=http://localhost:8000
 ```
+
+> No API keys required. AI features use a local Ollama model; if Ollama isn't running,
+> the app falls back to deterministic insights/analyst automatically.
 
 ### 3. Database
 ```bash
