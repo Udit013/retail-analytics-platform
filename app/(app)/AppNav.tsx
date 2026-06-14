@@ -4,6 +4,7 @@ import { usePathname } from 'next/navigation';
 
 const navLinks = [
   { href: '/dashboard', label: 'Dashboard' },
+  { href: '/forecasting', label: 'Forecasting' },
   { href: '/etl', label: 'ETL Upload' },
   { href: '/tables/customers', label: 'Customers' },
   { href: '/tables/products', label: 'Products' },
@@ -18,7 +19,7 @@ export default function AppNav() {
     <header className="sticky top-0 z-50 w-full bg-white border-b border-gray-200 shadow-sm">
       <div className="max-w-7xl mx-auto h-14 px-4 flex items-center justify-between gap-4">
         <Link href="/dashboard" className="font-bold text-gray-900 text-sm tracking-tight whitespace-nowrap">
-          📊 RetailAnalytics
+          🧭 RetailNexa AI
         </Link>
         <nav className="flex-1 overflow-x-auto">
           <ul className="flex gap-1 text-sm">

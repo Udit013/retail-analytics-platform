@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 
 export default function AiInsights() {
   const [insight, setInsight] = useState('');
+  const [source, setSource] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
 
@@ -12,6 +13,7 @@ export default function AiInsights() {
       .then((d) => {
         if (d.insight) {
           setInsight(d.insight);
+          setSource(d.source || '');
         } else {
           setError(true);
         }
@@ -28,7 +30,9 @@ export default function AiInsights() {
       <div className="flex items-center gap-2 mb-3">
         <span className="text-lg">✨</span>
         <h2 className="text-base font-semibold text-indigo-900">AI Weekly Summary</h2>
-        <span className="text-xs text-indigo-400 font-medium ml-auto">Gemini 2.0 Flash</span>
+        {source && (
+          <span className="text-xs text-indigo-400 font-medium ml-auto">{source}</span>
+        )}
       </div>
       {loading && (
         <div className="space-y-2">
@@ -38,7 +42,7 @@ export default function AiInsights() {
         </div>
       )}
       {!loading && error && (
-        <p className="text-sm text-indigo-500 italic">AI insights unavailable — add a valid GEMINI_API_KEY to enable.</p>
+        <p className="text-sm text-indigo-500 italic">Insight unavailable right now — please retry.</p>
       )}
       {!loading && !error && (
         <p className="text-sm text-indigo-800 leading-relaxed">{insight}</p>
