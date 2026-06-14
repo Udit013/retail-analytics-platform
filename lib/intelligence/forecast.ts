@@ -27,6 +27,7 @@ export interface ForecastResult {
   trendPerStep: number;
   confidence: number;
   metrics: { mape: number; rmse: number; r2: number };
+  backtest: { mape: number; rmse: number; periods: number } | null;
   series: ForecastPoint[]; // history (actual+fitted) then future
 }
 
@@ -186,19 +187,31 @@ export function forecast(
   let chosen = candidates.reduce((best, c) =>
     rmse(values.slice(1), c.fitted.slice(1)) < rmse(values.slice(1), best.fitted.slice(1)) ? c : best
   );
+  // Honest out-of-sample accuracy for the chosen model, measured on the holdout.
+  let backtest: { mape: number; rmse: number; periods: number } | null = null;
   if (n - vK >= 4) {
     const train = values.slice(0, n - vK);
     const holdout = values.slice(n - vK);
     const trainCands = buildCandidates(train, m);
     let bestName = '';
     let bestErr = Infinity;
+    const errByName: Record<string, number[]> = {};
     for (const c of trainCands) {
       const preds = holdout.map((_, i) => c.project(i + 1));
+      errByName[c.model] = preds;
       const err = rmse(holdout, preds);
       if (err < bestErr) { bestErr = err; bestName = c.model; }
     }
     const winner = candidates.find((c) => c.model === bestName);
     if (winner) chosen = winner;
+    const winnerPreds = errByName[chosen.model];
+    if (winnerPreds) {
+      backtest = {
+        mape: Math.round(mape(holdout, winnerPreds) * 10) / 10,
+        rmse: Math.round(rmse(holdout, winnerPreds) * 100) / 100,
+        periods: vK,
+      };
+    }
   }
 
   const model = chosen.model;
@@ -249,6 +262,7 @@ export function forecast(
       rmse: Math.round(rmse(actualForMetrics, fittedForMetrics) * 100) / 100,
       r2: Math.round(r2(actualForMetrics, fittedForMetrics) * 1000) / 1000,
     },
+    backtest,
     series: [...history, ...future],
   };
 }

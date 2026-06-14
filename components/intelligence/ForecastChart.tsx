@@ -14,6 +14,7 @@ interface ForecastResp {
   metric: Metric; grain: Grain; periods: number; model: string; seasonality: number;
   trendPerStep: number; confidence: number;
   metrics: { mape: number; rmse: number; r2: number };
+  backtest: { mape: number; rmse: number; periods: number } | null;
   series: Pt[];
   summary: { lastActual: number; projectedNext: number | null; projectedEnd: number | null; projectedTotal: number };
 }
@@ -126,11 +127,14 @@ export default function ForecastChart() {
 
           {data && (
             <div className="flex flex-wrap gap-x-5 gap-y-1 mt-3 text-xs text-gray-500">
-              <span>Model: <span className="font-medium text-gray-700">{data.model}</span></span>
+              <span>Model: <span className="font-medium text-gray-700">{data.model}</span> <span className="text-gray-400">(auto-selected)</span></span>
               {data.seasonality > 0 && <span>Seasonality: <span className="font-medium text-gray-700">{data.seasonality} {grain}s</span></span>}
-              <span>Fit R²: <span className="font-medium text-gray-700">{data.metrics.r2}</span></span>
-              <span>MAPE: <span className="font-medium text-gray-700">{data.metrics.mape}%</span></span>
-              <span>RMSE: <span className="font-medium text-gray-700">{fmtFull(data.metrics.rmse)}</span></span>
+              {data.backtest ? (
+                <span>Backtest accuracy: <span className="font-medium text-gray-700">{(100 - data.backtest.mape).toFixed(1)}%</span> <span className="text-gray-400">(MAPE {data.backtest.mape}% on {data.backtest.periods}-{grain} holdout)</span></span>
+              ) : (
+                <span>In-sample MAPE: <span className="font-medium text-gray-700">{data.metrics.mape}%</span></span>
+              )}
+              {data.metrics.r2 >= 0 && <span>Fit R²: <span className="font-medium text-gray-700">{data.metrics.r2}</span></span>}
             </div>
           )}
         </>
