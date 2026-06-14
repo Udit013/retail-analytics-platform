@@ -1,45 +1,37 @@
 'use client';
-import { signIn } from '@/lib/auth-client';
-import { useState, useEffect, Suspense } from 'react';
-import { useSearchParams, useRouter } from 'next/navigation';
+import { signUp, signIn } from '@/lib/auth-client';
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
-const OAUTH_ERRORS: Record<string, string> = {
-  access_denied: 'Google sign-in was denied. Try email/password below instead.',
-  redirect_uri_mismatch: 'OAuth redirect URI not configured. Use email/password below.',
-};
-
-function SignInForm() {
+export default function SignUpPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
+  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const errParam = searchParams.get('error') || searchParams.get('error_description');
-    if (errParam) {
-      setError(OAUTH_ERRORS[errParam] ?? `Sign-in error: ${errParam}`);
-    }
-  }, [searchParams]);
-
-  const handleEmail = async (e: React.FormEvent) => {
+  const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (password.length < 8) {
+      setError('Password must be at least 8 characters.');
+      return;
+    }
     setLoading(true);
     setError(null);
     try {
-      const result = await signIn.email({ email, password, callbackURL: '/dashboard' });
+      const result = await signUp.email({ name, email, password, callbackURL: '/dashboard' });
       const err = (result as { error?: { message?: string } } | null)?.error;
       if (err) {
-        setError(err.message ?? 'Invalid email or password.');
+        setError(err.message ?? 'Sign-up failed. Try a different email.');
         setLoading(false);
       } else {
         router.push('/dashboard');
       }
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Sign-in failed.');
+      setError(e instanceof Error ? e.message : 'Sign-up failed.');
       setLoading(false);
     }
   };
@@ -51,7 +43,7 @@ function SignInForm() {
       const result = await signIn.social({ provider: 'google', callbackURL: '/dashboard' });
       const err = (result as { error?: { message?: string } } | null)?.error;
       if (err) {
-        setError(OAUTH_ERRORS[err.message ?? ''] ?? (err.message ?? 'Google sign-in failed.'));
+        setError(err.message ?? 'Google sign-in failed.');
         setGoogleLoading(false);
       }
     } catch (e) {
@@ -65,8 +57,8 @@ function SignInForm() {
       <div className="w-full max-w-sm bg-white rounded-2xl border border-gray-200 shadow-sm p-8 space-y-5">
         <div className="text-center space-y-1">
           <div className="text-3xl">📊</div>
-          <h1 className="text-xl font-bold text-gray-900">Retail Analytics</h1>
-          <p className="text-sm text-gray-500">Sign in to access your dashboard</p>
+          <h1 className="text-xl font-bold text-gray-900">Create account</h1>
+          <p className="text-sm text-gray-500">Join Retail Analytics</p>
         </div>
 
         {error && (
@@ -75,7 +67,18 @@ function SignInForm() {
           </div>
         )}
 
-        <form onSubmit={handleEmail} className="space-y-3">
+        <form onSubmit={handleSignUp} className="space-y-3">
+          <div>
+            <label className="block text-xs font-medium text-gray-700 mb-1">Name</label>
+            <input
+              type="text"
+              required
+              value={name}
+              onChange={e => setName(e.target.value)}
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Your name"
+            />
+          </div>
           <div>
             <label className="block text-xs font-medium text-gray-700 mb-1">Email</label>
             <input
@@ -88,10 +91,13 @@ function SignInForm() {
             />
           </div>
           <div>
-            <label className="block text-xs font-medium text-gray-700 mb-1">Password</label>
+            <label className="block text-xs font-medium text-gray-700 mb-1">
+              Password <span className="text-gray-400 font-normal">(min 8 chars)</span>
+            </label>
             <input
               type="password"
               required
+              minLength={8}
               value={password}
               onChange={e => setPassword(e.target.value)}
               className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -103,14 +109,14 @@ function SignInForm() {
             disabled={loading}
             className="w-full bg-blue-600 hover:bg-blue-700 text-white rounded-lg px-4 py-2.5 text-sm font-medium transition-colors disabled:opacity-50"
           >
-            {loading ? 'Signing in…' : 'Sign in'}
+            {loading ? 'Creating account…' : 'Create account'}
           </button>
         </form>
 
         <p className="text-xs text-center text-gray-500">
-          No account?{' '}
-          <Link href="/sign-up" className="text-blue-600 hover:underline font-medium">
-            Create one
+          Already have an account?{' '}
+          <Link href="/sign-in" className="text-blue-600 hover:underline font-medium">
+            Sign in
           </Link>
         </p>
 
@@ -142,13 +148,5 @@ function SignInForm() {
         </p>
       </div>
     </div>
-  );
-}
-
-export default function SignInPage() {
-  return (
-    <Suspense>
-      <SignInForm />
-    </Suspense>
   );
 }
