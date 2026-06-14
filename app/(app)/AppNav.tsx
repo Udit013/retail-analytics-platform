@@ -8,6 +8,7 @@ const navLinks = [
   { href: '/customer-intelligence', label: 'Customer Intel' },
   { href: '/inventory-optimization', label: 'Inventory' },
   { href: '/pricing-simulation', label: 'Simulator' },
+  { href: '/root-cause', label: 'Root Cause' },
   { href: '/etl', label: 'ETL Upload' },
   { href: '/tables/customers', label: 'Customers' },
   { href: '/tables/products', label: 'Products' },
