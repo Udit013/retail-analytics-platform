@@ -12,7 +12,7 @@ export default function DashboardPage() {
     <div className="max-w-7xl mx-auto p-4 md:p-6 space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
-        <p className="text-sm text-gray-500 mt-0.5">Retail Analytics Platform · 50k+ rows of synthetic data</p>
+        <p className="text-sm text-gray-500 mt-0.5">Real-time insights across your sales, inventory, and customers</p>
       </div>
 
       <KpiCards />

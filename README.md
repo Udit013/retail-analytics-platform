@@ -1,8 +1,8 @@
 # Retail Analytics Platform
 
-Full-stack retail analytics dashboard with 50k+ rows of synthetic data, AI-powered insights, cohort analysis, anomaly detection, and real-time KPI refresh.
+Full-stack retail analytics dashboard with AI-powered insights, cohort analysis, anomaly detection, and real-time KPI refresh — all running on your own sales data.
 
-**Live Demo:** [https://sales-dashboard-oj09qfxim-udit-agarwals-projects-91413f51.vercel.app]
+**Live:** https://retailnexa.vercel.app
 **GitHub:** https://github.com/Udit013/retail-analytics-platform
 
 ---
@@ -11,7 +11,7 @@ Full-stack retail analytics dashboard with 50k+ rows of synthetic data, AI-power
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                     FRONTEND  (Next.js 16)                      │
+│                     FRONTEND  (Next.js)                          │
 │  Dashboard · Revenue Chart · Cohort Heatmap · AI Insights       │
 │  Product Chart · AOV Chart · Inventory Table · Anomaly Alerts   │
 │  CRUD Tables (Admin) · ETL Upload (Admin) · Sign-In Page        │
@@ -25,14 +25,13 @@ Full-stack retail analytics dashboard with 50k+ rows of synthetic data, AI-power
 │  /api/auth/[...all]          /api/customers|products|orders     │
 ├─────────────────────────────────────────────────────────────────┤
 │                     DATA  (Neon PostgreSQL)                      │
-│  customers (500) · products (200) · orders (10k)               │
-│  sales/order_items (50k+) · inventory · returns · etl_logs      │
+│  customers · products · orders · sales/order_items             │
+│  inventory · returns · etl_logs                                 │
 │  user · session · account · verification  (better-auth)         │
 └─────────────────────────────────────────────────────────────────┘
                                │
-              ┌────────────────┼─────────────────┐
-     Gemini 2.0 Flash    Google OAuth          Vercel
-     (AI insights)       (better-auth)         (deploy)
+              ┌────────────────┴─────────────────┐
+          Gemini (AI insights)             Vercel (deploy)
 ```
 
 ---
@@ -43,16 +42,15 @@ Full-stack retail analytics dashboard with 50k+ rows of synthetic data, AI-power
 |---------|-------------|
 | Live KPI Cards | Revenue, orders, AOV, return rate, active customers — SSE refresh every 30s |
 | Revenue Trend | Line chart · day/week/month/quarter · date range picker · export CSV |
-| Product Performance | Top 15 by revenue/units/return rate · category filter |
+| Product Performance | Top products by revenue/units/return rate · category filter |
 | Cohort Heatmap | Month-N retention grid (custom SVG renderer, no library) |
 | AOV Charts | Monthly AOV trend + basket size distribution |
 | Inventory Health | Turnover velocity, days-of-stock, low-stock alerts |
-| AI Insights | Gemini 2.0 Flash weekly summary, cached 24h |
+| AI Insights | Gemini-generated weekly summary, cached 24h |
 | Anomaly Detection | Z-score > 2.5σ on daily revenue with explanations |
 | ETL Pipeline | CSV drag-drop · dedup · FK validation · run audit log |
 | CSV/JSON Export | Any dataset downloadable from the dashboard |
-| RBAC | Google OAuth · Admin: all pages · Viewer: dashboard only |
-| 50k+ Rows | Seeder generates realistic synthetic data across 8 tables |
+| RBAC | Email + password auth · Admin: all pages · Viewer: dashboard only |
 
 ---
 
@@ -60,15 +58,15 @@ Full-stack retail analytics dashboard with 50k+ rows of synthetic data, AI-power
 
 | Layer | Tech |
 |-------|------|
-| Framework | Next.js 16 (App Router) |
-| Database | Neon PostgreSQL (free tier) |
+| Framework | Next.js (App Router) |
+| Database | Neon PostgreSQL |
 | ORM | Drizzle ORM |
-| Auth | better-auth + Google OAuth |
+| Auth | better-auth (email + password, RBAC) |
 | Charts | Recharts |
-| AI | Gemini 2.0 Flash |
+| AI | Gemini |
 | ETL | PapaParse (CSV) |
-| Styling | Tailwind CSS 4 |
-| Deploy | Vercel (free tier) |
+| Styling | Tailwind CSS |
+| Deploy | Vercel |
 | Language | TypeScript |
 
 ---
@@ -104,16 +102,19 @@ Create `.env` in the project root:
 DATABASE_URL=postgresql://...neon.tech/neondb?sslmode=require
 BETTER_AUTH_SECRET=<random 32-byte base64>
 BETTER_AUTH_URL=http://localhost:3000
-GOOGLE_CLIENT_ID=<from Google Cloud Console>
-GOOGLE_CLIENT_SECRET=<from Google Cloud Console>
 GEMINI_API_KEY=<from Google AI Studio — free>
 NEXT_PUBLIC_APP_URL=http://localhost:3000
 ```
 
-### 3. Database + seed
+### 3. Database
 ```bash
 npm run db:push    # push schema to Neon
-npm run seed       # 500 customers, 200 products, 10k orders, 50k+ items
+```
+
+Add your own data through the **ETL upload** page (CSV) or the **CRUD tables**.
+To load a batch of starter records for local development:
+```bash
+npm run seed       # optional: generates example rows for development
 ```
 
 ### 4. Dev server
@@ -121,16 +122,16 @@ npm run seed       # 500 customers, 200 products, 10k orders, 50k+ items
 npm run dev        # http://localhost:3000
 ```
 
-### 5. Become admin
-After first sign-in, run in Neon SQL editor:
+### 5. Accounts and roles
+Create an account at `/sign-up`. New accounts get the `viewer` role.
+Promote a user to admin (sets a password + admin role):
+```bash
+npm run set-admin <email> <password>
+```
+Or directly in the Neon SQL editor:
 ```sql
 UPDATE "user" SET role = 'admin' WHERE email = 'your@email.com';
 ```
-
-### Google OAuth config
-Add to your OAuth client:
-- **JS origins:** `http://localhost:3000`
-- **Redirect URIs:** `http://localhost:3000/api/auth/callback/google`
 
 ---
 
@@ -140,9 +141,8 @@ Add to your OAuth client:
 npx vercel --prod
 ```
 
-Set env vars in Vercel dashboard (same keys as `.env`).
-Update `BETTER_AUTH_URL` and `NEXT_PUBLIC_APP_URL` to your Vercel URL.
-Add Vercel URL to Google OAuth authorized origins + redirect URIs.
+Set env vars in the Vercel dashboard (same keys as `.env`).
+Set `BETTER_AUTH_URL` and `NEXT_PUBLIC_APP_URL` to your Vercel URL.
 
 ---
 
